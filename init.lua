@@ -5,8 +5,8 @@ oldplayer = {}
 
 -- SETTINGS 
 
-oldplayer.requirement = {"default:dirt 1", "default:iron_lump 1"};
-oldplayer.welcome = "*** IMPORTANT *** please have at least 1 dirt and 1 iron ore in your inventory when leaving to register as serious player. If not, your player data will be deleted.";
+oldplayer.requirement = {"default:dirt 1", "default:steel_ingot 1"};
+oldplayer.welcome = "*** IMPORTANT *** please have at least 1 dirt and 1 steel ingot in your inventory when leaving to register as serious player. If not, your player data will be deleted.";
 
 -- END OF SETTINGS 
 
@@ -21,13 +21,16 @@ minetest.register_on_joinplayer(function(player)
 	-- read player inventory data
 	local inv = player:get_inventory();
 	local isoldplayer = inv:get_stack("oldplayer", 1):get_count();
+	inv:set_size("oldplayer", 2);
+	local ip = minetest.get_player_ip(name); if not ip then return end
+	inv:set_stack("oldplayer", 2, ItemStack("IP".. ip)) -- string.gsub(ip,".","_")));
+	
 	if isoldplayer > 0 then
 		oldplayer.players[name] = 1
 		minetest.chat_send_player(name, "#OLDPLAYER: welcome back");
 	else
 		local privs = minetest.get_player_privs(name);
 		if privs.kick then
-			inv:set_size("oldplayer", 1);
 			inv:set_stack("oldplayer", 1, ItemStack("oldplayer"));
 			minetest.chat_send_player(name, "#OLDPLAYER: welcome moderator. setting as old player.");
 			oldplayer.players[name] = 1
@@ -38,6 +41,7 @@ minetest.register_on_joinplayer(function(player)
 	--		minetest.chat_send_player(name, oldplayer.welcome);
 		end
 	end
+	
 	
 end)
 
@@ -58,7 +62,7 @@ minetest.register_on_leaveplayer(function(player, timed_out)
 	end
 	
 	if not delete then -- set up oldplayer inventory so we know player is old next time
-		inv:set_size("oldplayer", 1);
+		inv:set_size("oldplayer", 2);
 		inv:set_stack("oldplayer", 1, ItemStack("oldplayer"));
 	else -- delete player profile
 		
@@ -161,16 +165,3 @@ local function remove_non_old_player_files()
 end
 
 minetest.register_on_shutdown(function() remove_non_old_player_files();remove_missing_players_from_auth() end)
-
-
--- "FUN STUFF", might be useful
-
--- STUPID DESIGN: writing path as "xxx\bin\..\worlds\xxx", have to waste time fixing that?
-		-- local filename = "";
-		-- local p1,p2 = string.find(worldpath,"\\bin\\..");
-		-- if false then --p1 then 
-			-- print("changing path");
-			-- filename = string.sub(worldpath,1,p1-1)..string.sub(worldpath,p2+1).. "\\players\\" .. name;
-			-- else filename = worldpath .. "\\players\\" .. name;
-		-- end
-		-- print("filename " .. filename );
